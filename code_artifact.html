@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="zh-TW" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>「展」開生活 - 互動式商業企劃書</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3b82f6',
+                        secondary: '#10b981',
+                        accent: '#f59e0b',
+                        dark: '#1e293b',
+                    },
+                    fontFamily: {
+                        sans: ['"Inter"', '"PingFang TC"', '"Microsoft JhengHei"', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom Styles for Interactive Elements */
+        body { padding-top: 80px; } /* Offset for fixed navbar */
+        
+        /* 3D Flip Cards */
+        .flip-card {
+            background-color: transparent;
+            perspective: 1000px;
+            height: 320px;
+        }
+        .flip-card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            transition: transform 0.8s;
+            transform-style: preserve-3d;
+        }
+        .flip-card:hover .flip-card-inner, .flip-card.active .flip-card-inner {
+            transform: rotateY(180deg);
+        }
+        .flip-card-front, .flip-card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            border-radius: 1rem;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .flip-card-front {
+            background-color: #ffffff;
+            border-top: 4px solid #3b82f6;
+        }
+        .flip-card-back {
+            background-color: #3b82f6;
+            color: white;
+            transform: rotateY(180deg);
+        }
+
+        /* Accordion */
+        .accordion-content {
+            transition: max-height 0.3s ease-out, padding 0.3s ease;
+            max-height: 0;
+            overflow: hidden;
+        }
+        .accordion-item.active .accordion-content {
+            max-height: 500px; /* Arbitrary large height */
+            padding-bottom: 1.5rem;
+        }
+        .accordion-icon {
+            transition: transform 0.3s ease;
+        }
+        .accordion-item.active .accordion-icon {
+            transform: rotate(180deg);
+        }
+
+        /* Stepper */
+        .step-item { cursor: pointer; transition: all 0.3s ease; }
+        .step-item:hover .step-circle { transform: scale(1.1); box-shadow: 0 0 15px rgba(59, 130, 246, 0.5); }
+        .step-content { display: none; animation: fadeIn 0.5s ease forwards; }
+        .step-content.active { display: block; }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Glassmorphism Navbar */
+        .nav-glass {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 antialiased selection:bg-primary selection:text-white">
+
+    <!-- Navigation -->
+    <nav class="fixed top-0 left-0 w-full nav-glass z-50 transition-all duration-300">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-20">
+                <div class="flex-shrink-0 flex items-center cursor-pointer" onclick="window.scrollTo(0,0)">
+                    <span class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary">
+                        <i class="fa-solid fa-map-location-dot mr-2"></i>「展」開生活
+                    </span>
+                </div>
+                <!-- Desktop Menu -->
+                <div class="hidden md:flex space-x-6">
+                    <a href="#intel" class="text-sm font-medium text-gray-600 hover:text-primary transition">企劃情報</a>
+                    <a href="#swot" class="text-sm font-medium text-gray-600 hover:text-primary transition">SWOT分析</a>
+                    <a href="#stp" class="text-sm font-medium text-gray-600 hover:text-primary transition">STP策略</a>
+                    <a href="#tactics" class="text-sm font-medium text-gray-600 hover:text-primary transition">7Ps戰術</a>
+                    <a href="#schedule" class="text-sm font-medium text-gray-600 hover:text-primary transition">執行時程</a>
+                    <a href="#budget" class="text-sm font-medium text-gray-600 hover:text-primary transition">經費預估</a>
+                </div>
+                <!-- Mobile Menu Button -->
+                <div class="md:hidden flex items-center">
+                    <button id="mobile-menu-btn" class="text-gray-600 hover:text-primary focus:outline-none">
+                        <i class="fa-solid fa-bars text-2xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <!-- Mobile Menu (Hidden by default) -->
+        <div id="mobile-menu" class="hidden md:hidden bg-white border-t border-gray-100 px-4 pt-2 pb-4 space-y-1 shadow-lg">
+            <a href="#intel" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary hover:bg-blue-50">企劃情報</a>
+            <a href="#swot" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary hover:bg-blue-50">SWOT分析</a>
+            <a href="#stp" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary hover:bg-blue-50">STP策略</a>
+            <a href="#schedule" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary hover:bg-blue-50">執行時程</a>
+            <a href="#budget" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary hover:bg-blue-50">經費預估</a>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="relative bg-dark text-white overflow-hidden pt-16 pb-24">
+        <div class="absolute inset-0 z-0 opacity-20">
+            <img src="https://images.unsplash.com/photo-1540575467063-178a50c2df87?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80" alt="Exhibition" class="w-full h-full object-cover">
+        </div>
+        <div class="absolute inset-0 bg-gradient-to-r from-dark to-transparent z-0"></div>
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div class="text-center sm:text-left max-w-3xl">
+                <span class="inline-block py-1 px-3 rounded-full bg-primary/20 text-blue-300 text-sm font-semibold tracking-wider mb-4 border border-primary/30">第15屆 TBSA全國大專創新企劃競賽</span>
+                <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight mb-6">
+                    「展」開生活<br>
+                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400 text-3xl sm:text-4xl mt-2 block">隨身觀展地圖與展覽指南</span>
+                </h1>
+                <p class="text-lg sm:text-xl text-gray-300 mb-8">專為年輕潮流族群打造，結合便利與趣味的智慧觀展小幫手。無縫將靈感匯入個人行程，不用煩惱做功課與遺忘展期。</p>
+                <a href="#swot" class="inline-flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-full text-white bg-primary hover:bg-blue-600 transition shadow-lg shadow-blue-500/30">
+                    探索企劃案 <i class="fa-solid fa-arrow-down ml-2"></i>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-24">
+
+        <!-- Section: 企劃情報 -->
+        <section id="intel" class="scroll-mt-24">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold text-dark">企劃情報與痛點分析</h2>
+                <div class="w-24 h-1 bg-primary mx-auto mt-4 rounded-full"></div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="bg-white p-8 rounded-2xl shadow-sm hover:shadow-md transition border border-gray-100">
+                    <div class="w-12 h-12 bg-red-100 text-red-500 rounded-xl flex items-center justify-center text-2xl mb-6">
+                        <i class="fa-solid fa-heart-crack"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">消費者痛點</h3>
+                    <p class="text-gray-600">藝文受眾面臨「資訊碎片化」。貼文存了常忘記去，手動將展覽地點與時間貼進行事曆不便，且綜合型平台多包含付費活動，不適合隨性免費觀展需求。</p>
+                </div>
+                <div class="bg-white p-8 rounded-2xl shadow-sm hover:shadow-md transition border border-gray-100">
+                    <div class="w-12 h-12 bg-blue-100 text-blue-500 rounded-xl flex items-center justify-center text-2xl mb-6">
+                        <i class="fa-solid fa-magnifying-glass-chart"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">產業情報</h3>
+                    <p class="text-gray-600">綜合平台資訊齊全但偏向交易；社群平台資訊多元但缺乏時間排程。體驗經濟崛起，消費從「靜態觀賞」轉向「微型體驗與主動參與」。</p>
+                </div>
+                <div class="bg-white p-8 rounded-2xl shadow-sm hover:shadow-md transition border border-gray-100">
+                    <div class="w-12 h-12 bg-emerald-100 text-emerald-500 rounded-xl flex items-center justify-center text-2xl mb-6">
+                        <i class="fa-solid fa-bullseye"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">企劃目標</h3>
+                    <p class="text-gray-600">建立收藏功能、免費會員制與掃碼集點。從「查詢工具」升級為「隨身觀展小幫手」，目標上架1000檔活動，吸引200家主辦方進駐。</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section: SWOT (Interactive Flip Cards) -->
+        <section id="swot" class="scroll-mt-24 bg-gray-100 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-16 rounded-3xl">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold text-dark">現況分析與策略對策 (SWOT)</h2>
+                <p class="mt-4 text-gray-600">游標懸停 (或點擊) 卡片以查看應對策略細節</p>
+                <div class="w-24 h-1 bg-primary mx-auto mt-4 rounded-full"></div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- S -->
+                <div class="flip-card" onclick="this.classList.toggle('active')">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front">
+                            <div class="text-4xl text-primary mb-4 font-black">S</div>
+                            <h3 class="text-xl font-bold mb-2">優勢 (Strengths)</h3>
+                            <ul class="text-sm text-gray-600 text-left list-disc pl-5 space-y-1">
+                                <li>資訊整合度高，解決分散痛點</li>
+                                <li>使用者介面體驗佳 (地圖/分類)</li>
+                                <li>支援用戶收藏及評價</li>
+                            </ul>
+                        </div>
+                        <div class="flip-card-back text-left">
+                            <h4 class="font-bold text-lg border-b border-blue-400 pb-2 mb-2">SO 成長策略</h4>
+                            <p class="text-sm">開發「周邊快閃地圖」與「匯入行事曆」功能，結合點數會員制，快速搶佔年輕族群探索活動的流量。</p>
+                        </div>
+                    </div>
+                </div>
+                <!-- W -->
+                <div class="flip-card" onclick="this.classList.toggle('active')">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front" style="border-top-color: #f59e0b;">
+                            <div class="text-4xl text-accent mb-4 font-black">W</div>
+                            <h3 class="text-xl font-bold mb-2">劣勢 (Weaknesses)</h3>
+                            <ul class="text-sm text-gray-600 text-left list-disc pl-5 space-y-1">
+                                <li>初期品牌知名度低，流量不足</li>
+                                <li>缺少主辦方直接合作管道</li>
+                                <li>獲利低、營運資金有限</li>
+                            </ul>
+                        </div>
+                        <div class="flip-card-back text-left" style="background-color: #f59e0b;">
+                            <h4 class="font-bold text-lg border-b border-yellow-400 pb-2 mb-2">WO 扭轉策略</h4>
+                            <p class="text-sm">初期推出主辦方「免費自助上架及推播」方案，吸引急需曝光管道的主辦方與品牌自主進駐，豐富平台內容。</p>
+                        </div>
+                    </div>
+                </div>
+                <!-- O -->
+                <div class="flip-card" onclick="this.classList.toggle('active')">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front" style="border-top-color: #10b981;">
+                            <div class="text-4xl text-secondary mb-4 font-black">O</div>
+                            <h3 class="text-xl font-bold mb-2">機會 (Opportunities)</h3>
+                            <ul class="text-sm text-gray-600 text-left list-disc pl-5 space-y-1">
+                                <li>快閃店、音樂節蓬勃發展</li>
+                                <li>年輕族群熱衷打卡探索</li>
+                                <li>主辦方急需曝光的宣傳管道</li>
+                            </ul>
+                        </div>
+                        <div class="flip-card-back text-left" style="background-color: #10b981;">
+                            <h4 class="font-bold text-lg border-b border-emerald-400 pb-2 mb-2">行銷關鍵對策</h4>
+                            <p class="text-sm">招募社群特派員(大專院校社團)，導入自動化AI監測消息，打造遊戲化社群(現場掃QR Code與回報人潮)。</p>
+                        </div>
+                    </div>
+                </div>
+                <!-- T -->
+                <div class="flip-card" onclick="this.classList.toggle('active')">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front" style="border-top-color: #ef4444;">
+                            <div class="text-4xl text-red-500 mb-4 font-black">T</div>
+                            <h3 class="text-xl font-bold mb-2">威脅 (Threats)</h3>
+                            <ul class="text-sm text-gray-600 text-left list-disc pl-5 space-y-1">
+                                <li>社群品牌已有大量推薦文</li>
+                                <li>大型售票平台可能擴展業務</li>
+                                <li>資訊即時性低可能導致體驗不佳</li>
+                            </ul>
+                        </div>
+                        <div class="flip-card-back text-left" style="background-color: #ef4444;">
+                            <h4 class="font-bold text-lg border-b border-red-400 pb-2 mb-2">ST/WT 防禦策略</h4>
+                            <p class="text-sm">導入社群評價機制與用戶及時回報獎勵機制(點數抽獎)，確保資訊準確度並降低平台維護成本，區隔大型平台。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section: STP (Interactive Accordion) -->
+        <section id="stp" class="scroll-mt-24">
+            <div class="flex flex-col lg:flex-row gap-12 items-start">
+                <div class="lg:w-1/3">
+                    <h2 class="text-3xl font-bold text-dark mb-4">STP 市場策略設計</h2>
+                    <p class="text-gray-600 mb-6">點擊右側選單了解我們如何劃分市場區隔、鎖定目標受眾，以及我們的市場定位聲明。</p>
+                    <div class="p-6 bg-gradient-to-br from-primary to-blue-700 rounded-2xl text-white shadow-lg">
+                        <h4 class="font-bold text-xl mb-2"><i class="fa-solid fa-quote-left opacity-50 mr-2"></i>市場定位</h4>
+                        <p class="text-sm leading-relaxed">「展」開生活為熱愛探索活動、卻常錯過展期的年輕潮流族群，提供快閃與展覽的一站式探索服務，整合周邊搜尋、篩選、導航、行事曆與掃碼集點，讓使用者不再錯過精彩活動。</p>
+                    </div>
+                </div>
+                
+                <div class="lg:w-2/3 w-full space-y-4" id="accordion">
+                    <!-- Item 1 -->
+                    <div class="accordion-item bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+                        <button class="w-full px-6 py-4 text-left font-bold text-lg text-dark flex justify-between items-center focus:outline-none" onclick="toggleAccordion(this)">
+                            市場區隔 (Segmentation)
+                            <i class="fa-solid fa-chevron-down accordion-icon text-primary"></i>
+                        </button>
+                        <div class="accordion-content px-6 bg-gray-50">
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+                                <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
+                                    <div class="font-bold text-primary mb-1">區隔 A (追逐潮流)</div>
+                                    <div class="text-xs text-gray-500 mb-2">18-25歲大學生/年輕族群</div>
+                                    <p class="text-sm text-gray-700">尋找熱門快閃店、音樂節，善用社群軟體，喜愛打卡拍照。</p>
+                                </div>
+                                <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
+                                    <div class="font-bold text-secondary mb-1">區隔 B (隨性漫遊)</div>
+                                    <div class="text-xs text-gray-500 mb-2">20-40歲通勤族/文青</div>
+                                    <p class="text-sm text-gray-700">臨時有空檔時，快速搜尋周邊免費展覽或市集打發時間。</p>
+                                </div>
+                                <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
+                                    <div class="font-bold text-accent mb-1">區隔 C (提前規劃)</div>
+                                    <div class="text-xs text-gray-500 mb-2">25-40歲上班族/情侶</div>
+                                    <p class="text-sm text-gray-700">提前規劃週末行程，尋找適合與朋友伴侶共同參與的活動。</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Item 2 -->
+                    <div class="accordion-item bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+                        <button class="w-full px-6 py-4 text-left font-bold text-lg text-dark flex justify-between items-center focus:outline-none" onclick="toggleAccordion(this)">
+                            目標市場 (Targeting)
+                            <i class="fa-solid fa-chevron-down accordion-icon text-primary"></i>
+                        </button>
+                        <div class="accordion-content px-6 bg-gray-50">
+                            <ul class="space-y-3 pt-2 text-gray-700 list-disc pl-5">
+                                <li><strong class="text-dark">主要目標 (區隔A)：</strong>優先鎖定年輕潮流族群。藉由他們熱衷打卡與分享的特性，能快速為平台累積初期的真實內容與聲量，解決資訊即時性不足的障礙，形成網路效應。</li>
+                                <li><strong class="text-dark">次要目標 (區隔B&C)：</strong>臨時空檔多者(B)能最大化「周邊快閃地圖」使用率；而提前規劃族群(C)能透過「分類收藏」與「匯入行事曆」大幅提升平台留存率與黏著度。</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <!-- Item 3 -->
+                    <div class="accordion-item bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+                        <button class="w-full px-6 py-4 text-left font-bold text-lg text-dark flex justify-between items-center focus:outline-none" onclick="toggleAccordion(this)">
+                            產品功能特色定位
+                            <i class="fa-solid fa-chevron-down accordion-icon text-primary"></i>
+                        </button>
+                        <div class="accordion-content px-6 bg-gray-50">
+                            <div class="flex flex-wrap gap-2 pt-2 pb-2">
+                                <span class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">周邊快閃地圖</span>
+                                <span class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">一鍵同步行事曆</span>
+                                <span class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">按愛心分類收藏</span>
+                                <span class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">掃QR Code打卡集點</span>
+                                <span class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">主辦方免費自助上架</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section: 7Ps / AIDAS -->
+        <section id="tactics" class="scroll-mt-24">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold text-dark">行銷戰術與溝通設計 (7Ps & AIDAS)</h2>
+                <div class="w-24 h-1 bg-primary mx-auto mt-4 rounded-full"></div>
+            </div>
+            
+            <div class="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100">
+                <div class="grid grid-cols-1 md:grid-cols-2">
+                    <div class="p-8 lg:p-12 bg-gray-50">
+                        <h3 class="text-2xl font-bold mb-6 text-primary"><i class="fa-solid fa-chess-knight mr-2"></i>核心行銷戰術 (7Ps)</h3>
+                        <div class="space-y-4">
+                            <div class="flex"><div class="w-20 font-bold text-gray-700 flex-shrink-0">產品:</div><div class="text-sm text-gray-600">消費者端提供行事曆同步與集點；主辦方端提供數據後台。</div></div>
+                            <div class="flex"><div class="w-20 font-bold text-gray-700 flex-shrink-0">價格:</div><div class="text-sm text-gray-600">C端完全免費；B端初期免費上架推播，中後期提供加值置頂。</div></div>
+                            <div class="flex"><div class="w-20 font-bold text-gray-700 flex-shrink-0">通路:</div><div class="text-sm text-gray-600">線上雙平台下載與社群導流；線下展館、快閃店設置QR立牌。</div></div>
+                            <div class="flex"><div class="w-20 font-bold text-gray-700 flex-shrink-0">推廣:</div><div class="text-sm text-gray-600">與社團/創作者發布短影音；現場回報人潮集點抽獎。</div></div>
+                            <div class="flex"><div class="w-20 font-bold text-gray-700 flex-shrink-0">人員:</div><div class="text-sm text-gray-600">專責社群人員把關資訊；客服執行24小時應變SOP。</div></div>
+                            <div class="flex"><div class="w-20 font-bold text-gray-700 flex-shrink-0">展示:</div><div class="text-sm text-gray-600">數位成就徽章、實體地貼文宣、主辦方官方認證標籤。</div></div>
+                            <div class="flex"><div class="w-20 font-bold text-gray-700 flex-shrink-0">流程:</div><div class="text-sm text-gray-600">找展→收藏/匯入→現場打卡→集點抽獎之完整自動化體驗。</div></div>
+                        </div>
+                    </div>
+                    
+                    <div class="p-8 lg:p-12">
+                        <h3 class="text-2xl font-bold mb-6 text-secondary"><i class="fa-solid fa-bullhorn mr-2"></i>顧客心理程序 (AIDAS)</h3>
+                        <div class="relative border-l-2 border-gray-200 ml-3 space-y-6">
+                            <div class="pl-6 relative">
+                                <div class="absolute w-4 h-4 bg-secondary rounded-full -left-[9px] top-1 border-2 border-white"></div>
+                                <h4 class="font-bold text-gray-800">A - 引起注意</h4>
+                                <p class="text-sm text-gray-600 mt-1">發布「觀展地圖神器」短影音 (目標曝光100萬次)。</p>
+                            </div>
+                            <div class="pl-6 relative">
+                                <div class="absolute w-4 h-4 bg-secondary rounded-full -left-[9px] top-1 border-2 border-white"></div>
+                                <h4 class="font-bold text-gray-800">I - 增加興趣</h4>
+                                <p class="text-sm text-gray-600 mt-1">推出「社群特派員直擊」專欄，介紹私房小展 (目標瀏覽15萬次)。</p>
+                            </div>
+                            <div class="pl-6 relative">
+                                <div class="absolute w-4 h-4 bg-secondary rounded-full -left-[9px] top-1 border-2 border-white"></div>
+                                <h4 class="font-bold text-gray-800">D - 刺激慾望</h4>
+                                <p class="text-sm text-gray-600 mt-1">現場設置QR Code掃碼回報集點 (收集15,000筆打卡)。</p>
+                            </div>
+                            <div class="pl-6 relative">
+                                <div class="absolute w-4 h-4 bg-secondary rounded-full -left-[9px] top-1 border-2 border-white"></div>
+                                <h4 class="font-bold text-gray-800">A - 促使行動</h4>
+                                <p class="text-sm text-gray-600 mt-1">新手完成首筆「一鍵匯入」與「打卡」任務贈點 (首月5,000活躍)。</p>
+                            </div>
+                            <div class="pl-6 relative">
+                                <div class="absolute w-4 h-4 bg-secondary rounded-full -left-[9px] top-1 border-2 border-white"></div>
+                                <h4 class="font-bold text-gray-800">S - 提高滿意</h4>
+                                <p class="text-sm text-gray-600 mt-1">發送「年度觀展足跡報告」刺激曬圖 (次月留存率≥50%，評分4.5)。</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section: 執行時程 (Interactive Stepper) -->
+        <section id="schedule" class="scroll-mt-24">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold text-dark">執行團隊與實施時程</h2>
+                <div class="w-24 h-1 bg-primary mx-auto mt-4 rounded-full"></div>
+            </div>
+            
+            <div class="bg-white p-8 rounded-3xl shadow-md border border-gray-100">
+                <!-- Stepper Headers -->
+                <div class="flex flex-col md:flex-row justify-between mb-8 relative">
+                    <div class="hidden md:block absolute top-1/2 left-[10%] right-[10%] h-1 bg-gray-200 -z-10 transform -translate-y-1/2"></div>
+                    
+                    <div class="step-item text-center flex-1 mb-4 md:mb-0 relative" onclick="showStep(1)">
+                        <div id="step-circle-1" class="step-circle w-12 h-12 mx-auto bg-primary text-white rounded-full flex items-center justify-center font-bold text-lg mb-2 shadow-lg">M1-M2</div>
+                        <div class="font-bold text-gray-800">準備期</div>
+                    </div>
+                    <div class="step-item text-center flex-1 mb-4 md:mb-0 relative" onclick="showStep(2)">
+                        <div id="step-circle-2" class="step-circle w-12 h-12 mx-auto bg-gray-200 text-gray-500 rounded-full flex items-center justify-center font-bold text-lg mb-2 transition-colors">M3-M5</div>
+                        <div class="font-bold text-gray-800">上線期</div>
+                    </div>
+                    <div class="step-item text-center flex-1 relative" onclick="showStep(3)">
+                        <div id="step-circle-3" class="step-circle w-12 h-12 mx-auto bg-gray-200 text-gray-500 rounded-full flex items-center justify-center font-bold text-lg mb-2 transition-colors">M6-12</div>
+                        <div class="font-bold text-gray-800">留存期</div>
+                    </div>
+                </div>
+
+                <!-- Stepper Contents -->
+                <div class="min-h-[200px] bg-gray-50 p-6 rounded-2xl border border-gray-100">
+                    <div id="step-content-1" class="step-content active">
+                        <h4 class="text-xl font-bold text-primary mb-4"><i class="fa-solid fa-rocket mr-2"></i>系統建置與先期預熱 (準備期)</h4>
+                        <ul class="list-none space-y-3">
+                            <li class="flex items-start"><i class="fa-solid fa-check text-green-500 mt-1 mr-3"></i> <strong>數位與技術團隊：</strong>進行 App 雙平台測試上架，並完成 AI 關鍵字監測系統建置。</li>
+                            <li class="flex items-start"><i class="fa-solid fa-check text-green-500 mt-1 mr-3"></i> <strong>社群與內容團隊：</strong>開始招募大專院校文藝社團作為「社群特派員」。</li>
+                            <li class="flex items-start"><i class="fa-solid fa-check text-green-500 mt-1 mr-3"></i> <strong>行銷團隊：</strong>啟動短影音合作案，配合畢業季與暑期觀展旺季集中投放曝光。</li>
+                        </ul>
+                    </div>
+                    
+                    <div id="step-content-2" class="step-content">
+                        <h4 class="text-xl font-bold text-secondary mb-4"><i class="fa-solid fa-users mr-2"></i>用戶獲取與功能推廣 (上線期)</h4>
+                        <ul class="list-none space-y-3">
+                            <li class="flex items-start"><i class="fa-solid fa-check text-green-500 mt-1 mr-3"></i> <strong>行銷團隊：</strong>推出「社群特派員直擊專欄」與「新手首刷任務」，吸引首批下載用戶。</li>
+                            <li class="flex items-start"><i class="fa-solid fa-check text-green-500 mt-1 mr-3"></i> <strong>商務拓展：</strong>推進線下展館與快閃店現場設置掃碼打卡點，提供限量周邊資源互換。</li>
+                            <li class="flex items-start"><i class="fa-solid fa-check text-green-500 mt-1 mr-3"></i> <strong>客服團隊：</strong>即時監控雙平台評價，確保24小時內回應用戶問題與修復Bug。</li>
+                        </ul>
+                    </div>
+                    
+                    <div id="step-content-3" class="step-content">
+                        <h4 class="text-xl font-bold text-accent mb-4"><i class="fa-solid fa-chart-line mr-2"></i>數據優化與商業變現 (留存期)</h4>
+                        <ul class="list-none space-y-3">
+                            <li class="flex items-start"><i class="fa-solid fa-check text-green-500 mt-1 mr-3"></i> <strong>行銷與技術：</strong>年終生成並發送「個人年度觀展足跡報告」，鼓勵社交平台曬圖。</li>
+                            <li class="flex items-start"><i class="fa-solid fa-check text-green-500 mt-1 mr-3"></i> <strong>專案經理：</strong>全面檢核KPI，包括活動數量(>1000)、合作主辦方(>200)、商店評分(>4.5)及次月留存率(>50%)。</li>
+                            <li class="flex items-start"><i class="fa-solid fa-check text-green-500 mt-1 mr-3"></i> <strong>商務拓展：</strong>向高流量主辦方推廣「精準推播」等加值付費服務方案。</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section: 經費預估 (Chart.js) -->
+        <section id="budget" class="scroll-mt-24 mb-24">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold text-dark">創業經費預估分配</h2>
+                <div class="w-24 h-1 bg-primary mx-auto mt-4 rounded-full"></div>
+            </div>
+            
+            <div class="bg-white p-8 rounded-3xl shadow-md border border-gray-100 flex flex-col lg:flex-row items-center gap-12">
+                <div class="lg:w-1/2 w-full flex justify-center">
+                    <div class="w-full max-w-md aspect-square relative">
+                        <canvas id="budgetChart"></canvas>
+                        <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none mt-4">
+                            <span class="text-sm text-gray-500">總經費合計</span>
+                            <span class="text-2xl font-bold text-dark">$1,800,000</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="lg:w-1/2 w-full">
+                    <h3 class="text-2xl font-bold mb-6">預算明細</h3>
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center p-4 bg-blue-50 rounded-xl border-l-4 border-blue-500">
+                            <span class="font-medium text-gray-700">行銷溝通與推廣預算</span>
+                            <span class="font-bold text-blue-600">$ 1,150,000</span>
+                        </div>
+                        <div class="flex justify-between items-center p-4 bg-emerald-50 rounded-xl border-l-4 border-emerald-500">
+                            <span class="font-medium text-gray-700">數位 App 開發</span>
+                            <span class="font-bold text-emerald-600">$ 400,000</span>
+                        </div>
+                        <div class="flex justify-between items-center p-4 bg-yellow-50 rounded-xl border-l-4 border-yellow-500">
+                            <span class="font-medium text-gray-700">伺服器與AI監測系統維護</span>
+                            <span class="font-bold text-yellow-600">$ 100,000</span>
+                        </div>
+                        <div class="flex justify-between items-center p-4 bg-gray-100 rounded-xl border-l-4 border-gray-400">
+                            <span class="font-medium text-gray-700">預備金 (約10%)</span>
+                            <span class="font-bold text-gray-600">$ 150,000</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white py-12 text-center">
+        <div class="max-w-7xl mx-auto px-4">
+            <h2 class="text-2xl font-bold mb-4">「展」開生活</h2>
+            <p class="text-gray-400 mb-6">第15屆 TBSA全國大專創新企劃競賽 - 商業企劃書示範網頁</p>
+            <div class="flex justify-center space-x-4 mb-8">
+                <a href="#" class="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-primary transition"><i class="fa-brands fa-facebook-f"></i></a>
+                <a href="#" class="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-primary transition"><i class="fa-brands fa-instagram"></i></a>
+                <a href="#" class="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-primary transition"><i class="fa-brands fa-youtube"></i></a>
+            </div>
+            <p class="text-sm text-gray-500">&copy; 2026 「展」開生活 企劃團隊. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Interactive Scripts -->
+    <script>
+        // 1. Mobile Menu Toggle
+        const mobileBtn = document.getElementById('mobile-menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+        mobileBtn.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
+        
+        // Hide mobile menu on link click
+        mobileMenu.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', () => {
+                mobileMenu.classList.add('hidden');
+            });
+        });
+
+        // 2. Accordion Logic
+        function toggleAccordion(button) {
+            const item = button.parentElement;
+            const content = item.querySelector('.accordion-content');
+            const isActive = item.classList.contains('active');
+            
+            // Close all items
+            document.querySelectorAll('.accordion-item').forEach(el => {
+                el.classList.remove('active');
+            });
+
+            // If it wasn't active, open it
+            if (!isActive) {
+                item.classList.add('active');
+            }
+        }
+        // Open the first accordion by default
+        document.querySelector('.accordion-item').classList.add('active');
+
+        // 3. Stepper Logic
+        function showStep(stepNum) {
+            // Hide all content
+            document.querySelectorAll('.step-content').forEach(el => {
+                el.classList.remove('active');
+            });
+            // Show target content
+            document.getElementById(`step-content-${stepNum}`).classList.add('active');
+
+            // Reset all circles
+            document.querySelectorAll('.step-circle').forEach(el => {
+                el.classList.remove('bg-primary', 'text-white', 'shadow-lg');
+                el.classList.add('bg-gray-200', 'text-gray-500');
+            });
+
+            // Highlight active circle and previous circles
+            for(let i = 1; i <= stepNum; i++) {
+                const circle = document.getElementById(`step-circle-${i}`);
+                circle.classList.remove('bg-gray-200', 'text-gray-500');
+                if (i === stepNum) {
+                    circle.classList.add('bg-primary', 'text-white', 'shadow-lg');
+                } else {
+                    // Previous steps style
+                    circle.classList.add('bg-blue-300', 'text-white');
+                }
+            }
+        }
+
+        // 4. Chart.js Implementation
+        document.addEventListener("DOMContentLoaded", function() {
+            const ctx = document.getElementById('budgetChart').getContext('2d');
+            
+            // Chart Data
+            const budgetData = {
+                labels: ['行銷溝通與推廣', '數位 App 開發', '伺服器與AI維護', '預備金'],
+                datasets: [{
+                    data: [1150000, 400000, 100000, 150000],
+                    backgroundColor: [
+                        '#3b82f6', // blue-500
+                        '#10b981', // emerald-500
+                        '#eab308', // yellow-500
+                        '#9ca3af'  // gray-400
+                    ],
+                    hoverBackgroundColor: [
+                        '#2563eb', // blue-600
+                        '#059669', // emerald-600
+                        '#ca8a04', // yellow-600
+                        '#6b7280'  // gray-500
+                    ],
+                    borderWidth: 0,
+                    hoverOffset: 10
+                }]
+            };
+
+            // Chart Config
+            const config = {
+                type: 'doughnut',
+                data: budgetData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '70%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 20,
+                                font: { family: "'Inter', sans-serif", size: 14 }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.label || '';
+                                    if (label) { label += ': '; }
+                                    if (context.parsed !== null) {
+                                        label += new Intl.NumberFormat('zh-TW', { style: 'currency', currency: 'TWD', maximumFractionDigits: 0 }).format(context.parsed);
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    },
+                    animation: {
+                        animateScale: true,
+                        animateRotate: true
+                    }
+                }
+            };
+
+            // Initialize Chart using Intersection Observer to animate when scrolled into view
+            let chartRendered = false;
+            const observer = new IntersectionObserver((entries) => {
+                if(entries[0].isIntersecting && !chartRendered) {
+                    new Chart(ctx, config);
+                    chartRendered = true;
+                }
+            }, { threshold: 0.5 });
+            
+            observer.observe(document.getElementById('budget'));
+        });
+    </script>
+</body>
+</html>
